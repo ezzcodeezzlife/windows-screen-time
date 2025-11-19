@@ -4,7 +4,7 @@ Handles SQLite database operations for storing usage data
 """
 import sqlite3
 import os
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
 
 
@@ -157,6 +157,84 @@ class Database:
             'daily_stats': daily_stats,
             'top_apps': top_apps
         }
+    
+    def get_yesterday_stats(self):
+        """Get yesterday's statistics"""
+        yesterday = (date.today() - timedelta(days=1)).isoformat()
+        cursor = self.conn.cursor()
+        
+        # Get total time yesterday
+        cursor.execute('''
+            SELECT total_seconds FROM sessions WHERE date = ?
+        ''', (yesterday,))
+        row = cursor.fetchone()
+        total_seconds = row[0] if row else 0
+        
+        # Get top apps yesterday
+        cursor.execute('''
+            SELECT app_name, duration_seconds
+            FROM app_usage
+            WHERE date = ?
+            ORDER BY duration_seconds DESC
+            LIMIT 20
+        ''', (yesterday,))
+        
+        top_apps = [{'app_name': row[0], 'duration': row[1]} 
+                    for row in cursor.fetchall()]
+        
+        return {
+            'date': yesterday,
+            'total_seconds': total_seconds,
+            'top_apps': top_apps
+        }
+    
+    def get_date_stats(self, target_date):
+        """Get statistics for a specific date"""
+        if isinstance(target_date, str):
+            date_str = target_date
+        else:
+            date_str = target_date.isoformat()
+        
+        cursor = self.conn.cursor()
+        
+        # Get total time for date
+        cursor.execute('''
+            SELECT total_seconds FROM sessions WHERE date = ?
+        ''', (date_str,))
+        row = cursor.fetchone()
+        total_seconds = row[0] if row else 0
+        
+        # Get top apps for date
+        cursor.execute('''
+            SELECT app_name, duration_seconds
+            FROM app_usage
+            WHERE date = ?
+            ORDER BY duration_seconds DESC
+            LIMIT 20
+        ''', (date_str,))
+        
+        top_apps = [{'app_name': row[0], 'duration': row[1]} 
+                    for row in cursor.fetchall()]
+        
+        return {
+            'date': date_str,
+            'total_seconds': total_seconds,
+            'top_apps': top_apps
+        }
+    
+    def get_historical_days(self, days=30):
+        """Get historical daily statistics for the past N days"""
+        cursor = self.conn.cursor()
+        
+        cursor.execute('''
+            SELECT date, total_seconds
+            FROM sessions
+            WHERE date >= date('now', '-' || ? || ' days')
+            ORDER BY date DESC
+        ''', (days,))
+        
+        return [{'date': row[0], 'total_seconds': row[1]} 
+               for row in cursor.fetchall()]
     
     def get_app_history(self, app_name, days=30):
         """Get usage history for a specific app"""
