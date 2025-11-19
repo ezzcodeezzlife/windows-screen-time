@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Build artifacts (keep build/ excluded, but allow dist/ for releases)
+build/
+*.spec
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Installer output
+installer/
+
+# Note: dist/ folder and .exe files are INCLUDED in git for easy distribution
+
+# Environment
+.env
+venv/
+env/
+ENV/
+
+# Logs
+*.log
+
